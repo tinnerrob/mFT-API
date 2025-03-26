@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Transactions;
+using mFT_API.Models;
 using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,53 +21,7 @@ app.UseHttpsRedirection();
 
 string connectionString = app.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
 
-//try
-//{
-//    using var conn = new SqlConnection(connectionString);
-//    conn.Open();
-
-//    var createCmd = new SqlCommand(@"
-//        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Persons')
-//        BEGIN
-//            CREATE TABLE Persons (
-//                ID int NOT NULL PRIMARY KEY IDENTITY,
-//                FirstName varchar(255),
-//                LastName varchar(255)
-//            );
-//        END
-//    ", conn);
-//    createCmd.ExecuteNonQuery();
-//}
-//catch (Exception e)
-//{
-//    // Table may already exist
-//    Console.WriteLine(e.Message);
-//}
-
-app.MapGet("/Person", () => {
-    var rows = new List<string>();
-
-    using var conn = new SqlConnection(connectionString);
-    conn.Open();
-
-    var selectCmd = new SqlCommand(@"
-        SELECT * FROM Persons
-    ", conn);
-
-    using SqlDataReader reader = selectCmd.ExecuteReader();
-    if (reader.HasRows)
-    {
-        while (reader.Read())
-        {
-            rows.Add($"{reader.GetInt32(0)}, {reader.GetString(1)}, {reader.GetString(2)}");
-        }
-    }
-
-    return rows;
-})
-.WithName("GetPersons")
-.WithOpenApi();
-
+//USERS
 app.MapGet("/User", () => {
     var rows = new List<string>();
 
@@ -73,7 +29,7 @@ app.MapGet("/User", () => {
     conn.Open();
 
     var selectCmd = new SqlCommand(@"
-        SELECT * FROM users
+        SELECT * FROM Users
     ", conn);
 
     using SqlDataReader reader = selectCmd.ExecuteReader();
@@ -97,13 +53,13 @@ app.MapPost("/User", (User user) =>
     conn.Open();
 
     var command = new SqlCommand(
-        "INSERT INTO users (user_name, password, group) VALUES (@username, @password, @group)",
+        "INSERT INTO Users (userName, password, groupID) VALUES (@userName, @password, @groupID)",
         conn);
 
     command.Parameters.Clear();
-    command.Parameters.AddWithValue("@username", user.Name);
+    command.Parameters.AddWithValue("@userName", user.UserName);
     command.Parameters.AddWithValue("@password", user.Password);
-    command.Parameters.AddWithValue("@group", user.Group);
+    command.Parameters.AddWithValue("@groupID", user.GroupID);
 
     var newId = Convert.ToInt32(command.ExecuteScalar());
 
@@ -112,84 +68,63 @@ app.MapPost("/User", (User user) =>
 .WithName("CreateUser")
 .WithOpenApi();
 
-//app.MapPost("/Person", (Person person) => {
-//    using var conn = new SqlConnection(connectionString);
-//    conn.Open();
+//CATEGORIES
 
-//    var command = new SqlCommand(
-//        "INSERT INTO Persons (firstName, lastName) VALUES (@firstName, @lastName)",
-//        conn);
 
-//    command.Parameters.Clear();
-//    command.Parameters.AddWithValue("@firstName", person.FirstName);
-//    command.Parameters.AddWithValue("@lastName", person.LastName);
+//TRANSACTIONS
+app.MapGet("/Transaction", () => {
+    var rows = new List<string>();
 
-//    var newId = Convert.ToInt32(command.ExecuteScalar());
+    using var conn = new SqlConnection(connectionString);
+    conn.Open();
 
-//    return newId;
-//})
-//.WithName("CreatePerson")
-//.WithOpenApi();
+    var selectCmd = new SqlCommand(@"
+        SELECT * FROM Transactions
+    ", conn);
 
-//app.MapGet("/Category", () => {
-//    var rows = new List<string>();
+    using SqlDataReader reader = selectCmd.ExecuteReader();
+    if (reader.HasRows)
+    {
+        while (reader.Read())
+        {
+            rows.Add($"{reader.GetInt32(0)}, {reader.GetString(1)}, {reader.GetString(2)}, {reader.GetInt32(3)}");
 
-//    using var conn = new SqlConnection(connectionString);
-//    conn.Open();
+        }
+    }
 
-//    var selectCmd = new SqlCommand(@"
-//        SELECT * FROM categories
-//    ", conn);
+    return rows;
+})
+.WithName("GetTransactions")
+.WithOpenApi();
 
-//    using SqlDataReader reader = selectCmd.ExecuteReader();
-//    if (reader.HasRows)
-//    {
-//        while (reader.Read())
-//        {
-//            rows.Add($"{reader.GetInt32(0)}, {reader.GetString(1)}, {reader.GetString(2)}");
+app.MapPost("/Transaction", (mFT_API.Models.Transaction transaction) =>
+{
+    using var conn = new SqlConnection(connectionString);
+    conn.Open();
 
-//        }
-//    }
+    var command = new SqlCommand(
+        "INSERT INTO Transactions (transactionName, amount, type, category, recurrenceFrequency, dueDate, paidDate, numberOfOccurrences, dayOfMonth, semiMonthlySecondDay, notes , userID) VALUES (@transactionName, @amount, @type, @category, @recurrenceFrequency, @dueDate, @paidDate, @numberOfOccurrences, @dayOfMonth, @semiMonthlySecondDay, @notes , @userID)",
+        conn);
 
-//    return rows;
-//})
-//.WithName("GetCategories")
-//.WithOpenApi();
+    command.Parameters.Clear();
+    command.Parameters.AddWithValue("@transactionName", transaction.TransactionName);
+    command.Parameters.AddWithValue("@amount", transaction.Amount);
+    command.Parameters.AddWithValue("@type", transaction.Type);
+    command.Parameters.AddWithValue("@category", transaction.Category);
+    command.Parameters.AddWithValue("@recurrenceFrequency", transaction.RecurrenceFrequency);
+    command.Parameters.AddWithValue("@dueDate", transaction.DueDate);
+    command.Parameters.AddWithValue("@paidDate", transaction.PaidDate);
+    command.Parameters.AddWithValue("@numberOfOccurrences", transaction.NumberOfOccurrences);
+    command.Parameters.AddWithValue("@dayOfMonth", transaction.DayOfMonth);
+    command.Parameters.AddWithValue("@semiMonthlySecondDay", transaction.SemiMonthlySecondDay);
+    command.Parameters.AddWithValue("@notes", transaction.Notes);
+    command.Parameters.AddWithValue("@userID", transaction.UserID);
 
-//app.MapPost("/Category", (Category category) => {
-//    using var conn = new SqlConnection(connectionString);
-//    conn.Open();
+    var newId = Convert.ToInt32(command.ExecuteScalar());
 
-//    var command = new SqlCommand(
-//        "INSERT INTO categories (name, color, icon, type, user_id) VALUES (@Name, @Color, @Icon, @Type, @User_ID)",
-//        conn);
-
-//    command.Parameters.Clear();
-//    command.Parameters.AddWithValue("@name", category.Name);
-//    command.Parameters.AddWithValue("@color", category.Color);
-//    command.Parameters.AddWithValue("@icon", category.Icon);
-//    command.Parameters.AddWithValue("@type", category.Type);
-//    command.Parameters.AddWithValue("@user_id", category.User_ID);
-
-//    var newId = Convert.ToInt32(command.ExecuteScalar());
-
-//    return newId;
-//})
-//.WithName("CreateCategory")
-//.WithOpenApi();
+    return newId;
+})
+.WithName("CreateTransaction")
+.WithOpenApi();
 
 app.Run();
-
-public class Person
-{
-    public required string FirstName { get; set; }
-    public required string LastName { get; set; }
-}
-
-public class User
-{
-    public required string Name { get; set; }
-    public required string Password { get; set; }
-    public int Group { get; set; }
-
-}
