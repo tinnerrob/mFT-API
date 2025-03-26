@@ -21,14 +21,20 @@ string connectionString = app.Configuration.GetConnectionString("AZURE_SQL_CONNE
 
 try
 {
-    // Table would be created ahead of time in production
     using var conn = new SqlConnection(connectionString);
     conn.Open();
 
-    var command = new SqlCommand(
-        "CREATE TABLE Persons (ID int NOT NULL PRIMARY KEY IDENTITY, FirstName varchar(255), LastName varchar(255));",
-        conn);
-    using SqlDataReader reader = command.ExecuteReader();
+    var createCmd = new SqlCommand(@"
+        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Persons')
+        BEGIN
+            CREATE TABLE Persons (
+                ID int NOT NULL PRIMARY KEY IDENTITY,
+                FirstName varchar(255),
+                LastName varchar(255)
+            );
+        END
+    ", conn);
+    createCmd.ExecuteNonQuery();
 }
 catch (Exception e)
 {
@@ -42,9 +48,11 @@ app.MapGet("/Person", () => {
     using var conn = new SqlConnection(connectionString);
     conn.Open();
 
-    var command = new SqlCommand("SELECT * FROM Persons", conn);
-    using SqlDataReader reader = command.ExecuteReader();
+    var selectCmd = new SqlCommand(@"
+        SELECT * FROM Persons
+    ", conn);
 
+    using SqlDataReader reader = selectCmd.ExecuteReader();
     if (reader.HasRows)
     {
         while (reader.Read())
@@ -70,7 +78,9 @@ app.MapPost("/Person", (Person person) => {
     command.Parameters.AddWithValue("@firstName", person.FirstName);
     command.Parameters.AddWithValue("@lastName", person.LastName);
 
-    using SqlDataReader reader = command.ExecuteReader();
+    var newId = Convert.ToInt32(command.ExecuteScalar());
+
+    return newId;
 })
 .WithName("CreatePerson")
 .WithOpenApi();
