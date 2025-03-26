@@ -103,22 +103,22 @@ app.MapPost("/Transaction", (mFT_API.Models.Transaction transaction) =>
     conn.Open();
 
     var command = new SqlCommand(
-        "INSERT INTO Transactions (transactionName, amount, type, category, recurrenceFrequency, dueDate, paidDate, numberOfOccurrences, dayOfMonth, semiMonthlySecondDay, notes , userID) VALUES (@transactionName, @amount, @type, @category, @recurrenceFrequency, @dueDate, @paidDate, @numberOfOccurrences, @dayOfMonth, @semiMonthlySecondDay, @notes , @userID)",
+        "INSERT INTO Transactions (transactionName, amount) VALUES (@transactionName, @amount)",
         conn);
 
     command.Parameters.Clear();
     command.Parameters.AddWithValue("@transactionName", transaction.TransactionName);
     command.Parameters.AddWithValue("@amount", transaction.Amount);
-    command.Parameters.AddWithValue("@type", transaction.Type);
-    command.Parameters.AddWithValue("@category", transaction.Category);
-    command.Parameters.AddWithValue("@recurrenceFrequency", transaction.RecurrenceFrequency);
-    command.Parameters.AddWithValue("@dueDate", transaction.DueDate);
-    command.Parameters.AddWithValue("@paidDate", transaction.PaidDate);
-    command.Parameters.AddWithValue("@numberOfOccurrences", transaction.NumberOfOccurrences);
-    command.Parameters.AddWithValue("@dayOfMonth", transaction.DayOfMonth);
-    command.Parameters.AddWithValue("@semiMonthlySecondDay", transaction.SemiMonthlySecondDay);
-    command.Parameters.AddWithValue("@notes", transaction.Notes);
-    command.Parameters.AddWithValue("@userID", transaction.UserID);
+    //command.Parameters.AddWithValue("@type", transaction.Type);
+    //command.Parameters.AddWithValue("@category", transaction.Category);
+    //command.Parameters.AddWithValue("@recurrenceFrequency", transaction.RecurrenceFrequency);
+    //command.Parameters.AddWithValue("@dueDate", transaction.DueDate);
+    //command.Parameters.AddWithValue("@paidDate", transaction.PaidDate);
+    //command.Parameters.AddWithValue("@numberOfOccurrences", transaction.NumberOfOccurrences);
+    //command.Parameters.AddWithValue("@dayOfMonth", transaction.DayOfMonth);
+    //command.Parameters.AddWithValue("@semiMonthlySecondDay", transaction.SemiMonthlySecondDay);
+    //command.Parameters.AddWithValue("@notes", transaction.Notes);
+    //command.Parameters.AddWithValue("@userID", transaction.UserID);
 
     var newId = Convert.ToInt32(command.ExecuteScalar());
 
