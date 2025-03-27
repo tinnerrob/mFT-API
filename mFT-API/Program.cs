@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Identity;
+using System.Text;
+using System.Reflection.PortableExecutable;
+
+const int keySize = 16;
+const int iterations = 10000;
+HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +51,7 @@ app.MapGet("/User", () =>
                 UserID = reader.GetInt32(0),
                 UserName = reader.GetString(1),
                 Email = reader.GetString(2),
-                //PasswordSalt = (reader.GetBytes(1, 0, null, 1, 1),
+                PasswordSalt = reader.GetString(3),
                 PasswordHash = reader.GetString(4),
                 GroupID = reader.GetInt32(5)
             };
@@ -61,14 +67,15 @@ return users;
 app.MapPost("/User", (User user) =>
     {
 
-        byte[] salt = RandomNumberGenerator.GetBytes(128 / 8);
+        byte[] salt = RandomNumberGenerator.GetBytes(keySize);
         //string? password = "test";
-
+        var saltString = Convert.ToBase64String(salt);
+;
         string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
             password: "test",
             salt: salt,
             prf: KeyDerivationPrf.HMACSHA256,
-            iterationCount: 1000,
+            iterationCount: iterations,
             numBytesRequested: 256 / 8));
 
         using var conn = new SqlConnection(connectionString);
@@ -81,7 +88,7 @@ app.MapPost("/User", (User user) =>
         command.Parameters.Clear();
         command.Parameters.AddWithValue("@userName", user.UserName);
         command.Parameters.AddWithValue("@email", user.Email);
-        command.Parameters.AddWithValue("@passwordSalt", salt);
+        command.Parameters.AddWithValue("@passwordSalt", saltString);
         command.Parameters.AddWithValue("@passwordHash", hashed);
         command.Parameters.AddWithValue("@groupID", user.GroupID);
 
