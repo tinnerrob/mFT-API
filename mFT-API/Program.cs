@@ -1,7 +1,12 @@
 ﻿using mFT_API.Models;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using System.Security.Cryptography;
 using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,30 +44,45 @@ app.MapGet("/User", () =>
             {
                 UserID = reader.GetInt32(0),
                 UserName = reader.GetString(1),
-                Password = reader.GetString(2),
-                GroupID = reader.GetInt32(3)
+                Email = reader.GetString(2),
+                //PasswordSalt = (reader.GetBytes(1, 0, null, 1, 1),
+                PasswordHash = reader.GetString(4),
+                GroupID = reader.GetInt32(5)
             };
             users.Add(user);
         }
     }
-
-    return users;
+            
+return users;
 })
 .WithName("GetUsers")
 .WithOpenApi();
 
 app.MapPost("/User", (User user) =>
     {
+
+        byte[] salt = RandomNumberGenerator.GetBytes(128 / 8);
+        //string? password = "test";
+
+        string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            password: "test",
+            salt: salt,
+            prf: KeyDerivationPrf.HMACSHA256,
+            iterationCount: 1000,
+            numBytesRequested: 256 / 8));
+
         using var conn = new SqlConnection(connectionString);
         conn.Open();
 
         var command = new SqlCommand(
-            "INSERT INTO Users (userName, password, groupID) VALUES (@userName, @password, @groupID)",
+            "INSERT INTO Users (userName, email, passwordSalt, passwordHash, groupID) VALUES (@userName, @email, @passwordSalt, @passwordHash, @groupID)",
             conn);
 
         command.Parameters.Clear();
         command.Parameters.AddWithValue("@userName", user.UserName);
-        command.Parameters.AddWithValue("@password", user.Password);
+        command.Parameters.AddWithValue("@email", user.Email);
+        command.Parameters.AddWithValue("@passwordSalt", salt);
+        command.Parameters.AddWithValue("@passwordHash", hashed);
         command.Parameters.AddWithValue("@groupID", user.GroupID);
 
         var newId = Convert.ToInt32(command.ExecuteScalar());
@@ -151,4 +171,7 @@ app.MapPost("/UserTransaction", (UserTransaction userTransaction) =>
     .WithName("CreateUserTransaction")
     .WithOpenApi();
 
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
 app.Run();
