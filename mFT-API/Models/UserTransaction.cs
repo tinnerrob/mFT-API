@@ -4,17 +4,17 @@ namespace mFT_API.Models
 	public class UserTransaction
 	{
         public required string TransactionName { get; set; }
-        public required string Amount { get; set; }
-        public required string TransactionType { get; set; }
-        //public required string Category { get; set; }
-        //public required string RecurrenceFrequency { get; set; }
-        //public required DateOnly DueDate { get; set; }
-        //public required DateOnly PaidDate { get; set; }
-        //public required int NumberOfOccurrences { get; set; }
-        //public required int DayOfMonth { get; set; }
-        //public required int SemiMonthlySecondDay { get; set; }
-        //public required string Notes { get; set; }
-        //public required int UserID { get; set; }
+        public required decimal TransactionAmount { get; set; }
+        public required int TransactionType { get; set; }
+        public required int TransactionCategory { get; set; }
+        public int RecurrenceFrequency { get; set; }
+        public required DateTime DueDate { get; set; }
+        public required DateTime PaidDate { get; set; }
+        public int NumberOfOccurrences { get; set; }
+        public int DayOfMonth { get; set; }
+        public int SemiMonthlySecondDay { get; set; }
+        public string? Notes { get; set; }
+        public required int UserID { get; set; }
     }
 }
 
