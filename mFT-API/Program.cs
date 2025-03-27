@@ -72,7 +72,7 @@ app.MapPost("/User", (User user) =>
 
 
 //TRANSACTIONS
-app.MapGet("/Transaction", () => {
+app.MapGet("/UserTransaction", () => {
     var rows = new List<string>();
 
     using var conn = new SqlConnection(connectionString);
@@ -87,30 +87,30 @@ app.MapGet("/Transaction", () => {
     {
         while (reader.Read())
         {
-            rows.Add($"{reader.GetInt32(0)}, {reader.GetString(1)}, {reader.GetString(2)}, {reader.GetInt32(3)}");
+            rows.Add($"{reader.GetInt32(0)}, {reader.GetString(1)}, {reader.GetString(2)}, {reader.GetString(3)}, {reader.GetString(4)}");
 
         }
     }
 
     return rows;
 })
-.WithName("GetTransactions")
+.WithName("GetUserTransactions")
 .WithOpenApi();
 
-app.MapPost("/Transaction", (mFT_API.Models.Transaction transaction) =>
+app.MapPost("/UserTransaction", (UserTransaction userTransaction) =>
 {
     using var conn = new SqlConnection(connectionString);
     conn.Open();
 
     var command = new SqlCommand(
-        "INSERT INTO Transactions (transactionName, amount) VALUES (@transactionName, @amount)",
+        "INSERT INTO Transactions (transactionName, amount, transactionType) VALUES (@transactionName, @amount, @transactionType)",
         conn);
 
     command.Parameters.Clear();
-    command.Parameters.AddWithValue("@transactionName", transaction.TransactionName);
-    command.Parameters.AddWithValue("@amount", transaction.Amount);
-    //command.Parameters.AddWithValue("@type", transaction.Type);
-    //command.Parameters.AddWithValue("@category", transaction.Category);
+    command.Parameters.AddWithValue("@transactionName", userTransaction.TransactionName);
+    command.Parameters.AddWithValue("@amount", userTransaction.Amount);
+    command.Parameters.AddWithValue("@type", userTransaction.TransactionType);
+    //command.Parameters.AddWithValue("@category", userTransaction.Category);
     //command.Parameters.AddWithValue("@recurrenceFrequency", transaction.RecurrenceFrequency);
     //command.Parameters.AddWithValue("@dueDate", transaction.DueDate);
     //command.Parameters.AddWithValue("@paidDate", transaction.PaidDate);
@@ -124,7 +124,7 @@ app.MapPost("/Transaction", (mFT_API.Models.Transaction transaction) =>
 
     return newId;
 })
-.WithName("CreateTransaction")
+.WithName("CreateUserTransaction")
 .WithOpenApi();
 
 app.Run();

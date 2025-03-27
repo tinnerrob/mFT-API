@@ -1,11 +1,11 @@
 ﻿using System;
 namespace mFT_API.Models
 {
-	public class Transaction
+	public class UserTransaction
 	{
         public required string TransactionName { get; set; }
-        public required int Amount { get; set; }
-        //public required string Type { get; set; }
+        public required string Amount { get; set; }
+        public required string TransactionType { get; set; }
         //public required string Category { get; set; }
         //public required string RecurrenceFrequency { get; set; }
         //public required DateOnly DueDate { get; set; }
