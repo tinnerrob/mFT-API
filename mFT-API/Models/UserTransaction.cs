@@ -16,6 +16,10 @@ namespace mFT_API.Models
         public int SemiMonthlySecondDay { get; set; }
         public string? Notes { get; set; }
         public required int UserID { get; set; }
+        public string? CreditCardVendor { get; set; }
+        public int? CreditCardLastFourDigits { get; set; }
+        public int? CreditCardType { get; set; }
+        public int? ParentRecurringTransactionId { get; set; }
     }
 }
 

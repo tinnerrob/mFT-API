@@ -133,7 +133,11 @@ app.MapPost("/User", (User user) =>
                     DayOfMonth = reader.GetInt32(9),
                     SemiMonthlySecondDay = reader.GetInt32(10),
                     Notes = reader.GetString(11),
-                    UserID = reader.GetInt32(12)
+                    UserID = reader.GetInt32(12),
+                    CreditCardVendor = reader.GetString(13),
+                    CreditCardLastFourDigits = reader.GetInt32(14),
+                    CreditCardType = reader.GetInt32(15),
+                    ParentRecurringTransactionId = reader.GetInt32(16)
                 };
                 transactions.Add(transaction);
             }
@@ -152,9 +156,9 @@ app.MapPost("/UserTransaction", (UserTransaction userTransaction) =>
 
         var command = new SqlCommand(
             "INSERT INTO UserTransactions " +
-            "(transactionName, transactionAmount, transactionType, transactionCategory, recurrenceFrequency, dueDate, paidDate, numberOfOccurrences, dayOfMonth, semiMonthlySecondDay, notes, userID) " +
+            "(transactionName, transactionAmount, transactionType, transactionCategory, recurrenceFrequency, dueDate, paidDate, numberOfOccurrences, dayOfMonth, semiMonthlySecondDay, notes, userID, creditCardVendor, creditCardLastFourDigits, creditCardType, parentRecurringTransactionId) " +
             "VALUES " +
-            "(@transactionName, @transactionAmount, @transactionType, @transactionCategory, @recurrenceFrequency, @dueDate, @paidDate, @numberOfOccurrences, @dayOfMonth, @semiMonthlySecondDay, @notes, @userID)",
+            "(@transactionName, @transactionAmount, @transactionType, @transactionCategory, @recurrenceFrequency, @dueDate, @paidDate, @numberOfOccurrences, @dayOfMonth, @semiMonthlySecondDay, @notes, @userID, @creditCardVendor, @creditCardLastFourDigits, @creditCardType, @parentRecurringTransactionId)",
             conn);
 
         command.Parameters.Clear();
@@ -170,6 +174,10 @@ app.MapPost("/UserTransaction", (UserTransaction userTransaction) =>
         command.Parameters.AddWithValue("@semiMonthlySecondDay", userTransaction.SemiMonthlySecondDay);
         command.Parameters.AddWithValue("@notes", userTransaction.Notes);
         command.Parameters.AddWithValue("@userID", userTransaction.UserID);
+        command.Parameters.AddWithValue("@creditCardVendor", userTransaction.CreditCardVendor);
+        command.Parameters.AddWithValue("@creditCardLastFourDigits", userTransaction.CreditCardLastFourDigits);
+        command.Parameters.AddWithValue("@creditCardType", userTransaction.CreditCardType);
+        command.Parameters.AddWithValue("@parentRecurringTransactionId", userTransaction.ParentRecurringTransactionId);
 
         var newId = Convert.ToInt32(command.ExecuteScalar());
 
