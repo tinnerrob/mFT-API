@@ -19,32 +19,39 @@ app.UseHttpsRedirection();
 string connectionString = app.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
 
 //USERS
-    app.MapGet("/User", () => {
-        var rows = new List<string>();
+app.MapGet("/User", () =>
+{
+    var users = new List<User>();
 
-        using var conn = new SqlConnection(connectionString);
-        conn.Open();
+    using var conn = new SqlConnection(connectionString);
+    conn.Open();
 
-        var selectCmd = new SqlCommand(@"
-            SELECT * FROM Users
-        ", conn);
+    var selectCmd = new SqlCommand(@"
+                SELECT * FROM Users
+            ", conn);
 
-        using SqlDataReader reader = selectCmd.ExecuteReader();
-        if (reader.HasRows)
+    using SqlDataReader reader = selectCmd.ExecuteReader();
+    if (reader.HasRows)
+    {
+        while (reader.Read())
         {
-            while (reader.Read())
+            var user = new User
             {
-                rows.Add($"{reader.GetInt32(0)}, {reader.GetString(1)}, {reader.GetString(2)}, {reader.GetInt32(3)}");
-
-            }
+                UserID = reader.GetInt32(0),
+                UserName = reader.GetString(1),
+                Password = reader.GetString(2),
+                GroupID = reader.GetInt32(3)
+            };
+            users.Add(user);
         }
+    }
 
-        return rows;
-    })
-    .WithName("GetUsers")
-    .WithOpenApi();
+    return users;
+})
+.WithName("GetUsers")
+.WithOpenApi();
 
-    app.MapPost("/User", (User user) =>
+app.MapPost("/User", (User user) =>
     {
         using var conn = new SqlConnection(connectionString);
         conn.Open();
@@ -69,44 +76,49 @@ string connectionString = app.Configuration.GetConnectionString("AZURE_SQL_CONNE
 
 
 //TRANSACTIONS
-    app.MapGet("/UserTransaction", () => {
-        var rows = new List<string>();
+    app.MapGet("/UserTransaction", () =>
+    {
+        var transactions = new List<UserTransaction>();
 
         using var conn = new SqlConnection(connectionString);
         conn.Open();
 
         var selectCmd = new SqlCommand(@"
-            SELECT * FROM UserTransactions
-        ", conn);
+                SELECT * FROM UserTransactions
+            ", conn);
 
         using SqlDataReader reader = selectCmd.ExecuteReader();
         if (reader.HasRows)
         {
             while (reader.Read())
             {
-                rows.Add($"{reader.GetInt32(0)}, " +
-                    $"{reader.GetString(1)}, " + //Name
-                    $"{reader.GetDecimal(2)}, " + //Amount
-                    $"{reader.GetInt32(3)}, " + //Type
-                    $"{reader.GetInt32(4)}, " + //Category
-                    $"{reader.GetInt32(5)}, " + //Frequency
-                    $"{reader.GetDateTime(6).ToShortDateString}, " + //DueDate
-                    $"{reader.GetDateTime(7).ToShortDateString}, " + //PaidDate
-                    $"{reader.GetInt32(8)}, " + //Occurences
-                    $"{reader.GetInt32(9)}, " + //DayOfMonth
-                    $"{reader.GetInt32(10)}, " + //SecondDay
-                    $"{reader.GetString(11)}, " + //Notes
-                    $"{reader.GetInt32(12)}" //UserID
-                    );
+                var transaction = new UserTransaction
+                {
+                    TransactionID = reader.GetInt32(0),
+                    TransactionName = reader.GetString(1),
+                    TransactionAmount = reader.GetDecimal(2),
+                    TransactionType = reader.GetInt32(3),
+                    TransactionCategory = reader.GetInt32(4),
+                    RecurrenceFrequency = reader.GetInt32(5),
+                    DueDate = reader.GetDateTime(6),
+                    PaidDate = reader.GetDateTime(7),
+                    NumberOfOccurrences = reader.GetInt32(8),
+                    DayOfMonth = reader.GetInt32(9),
+                    SemiMonthlySecondDay = reader.GetInt32(10),
+                    Notes = reader.GetString(11),
+                    UserID = reader.GetInt32(12)
+                };
+                transactions.Add(transaction);
             }
         }
 
-        return rows;
+        return transactions;
     })
     .WithName("GetUserTransactions")
     .WithOpenApi();
 
-    app.MapPost("/UserTransaction", (UserTransaction userTransaction) =>
+
+app.MapPost("/UserTransaction", (UserTransaction userTransaction) =>
     {
         using var conn = new SqlConnection(connectionString);
         conn.Open();
