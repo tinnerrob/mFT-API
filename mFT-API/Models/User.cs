@@ -8,6 +8,8 @@
         public string? PasswordSalt { get; set; }
         public required string PasswordHash { get; set; }
         public required int GroupID { get; set; }
-	}
+        public required bool Active { get; set; }
+        public required DateTime SubscriptionDate { get; set; }
+    }
 }
 

@@ -53,7 +53,9 @@ app.MapGet("/User", () =>
                 Email = reader.GetString(2),
                 PasswordSalt = reader.GetString(3),
                 PasswordHash = reader.GetString(4),
-                GroupID = reader.GetInt32(5)
+                GroupID = reader.GetInt32(5),
+                Active = reader.GetBoolean(6),
+                SubscriptionDate = reader.GetDateTime(7)
             };
             users.Add(user);
         }
@@ -82,7 +84,7 @@ app.MapPost("/User", (User user) =>
         conn.Open();
 
         var command = new SqlCommand(
-            "INSERT INTO Users (userName, email, passwordSalt, passwordHash, groupID) VALUES (@userName, @email, @passwordSalt, @passwordHash, @groupID)",
+            "INSERT INTO Users (userName, email, passwordSalt, passwordHash, groupID, active, subscriptionDate) VALUES (@userName, @email, @passwordSalt, @passwordHash, @groupID, @active, @subscriptionDate)",
             conn);
 
         command.Parameters.Clear();
@@ -91,6 +93,8 @@ app.MapPost("/User", (User user) =>
         command.Parameters.AddWithValue("@passwordSalt", saltString);
         command.Parameters.AddWithValue("@passwordHash", hashed);
         command.Parameters.AddWithValue("@groupID", user.GroupID);
+        command.Parameters.AddWithValue("@active", user.Active);
+        command.Parameters.AddWithValue("@subscriptionDate", user.SubscriptionDate);
 
         var newId = Convert.ToInt32(command.ExecuteScalar());
 
