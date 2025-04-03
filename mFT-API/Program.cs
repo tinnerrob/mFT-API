@@ -54,8 +54,8 @@ app.MapGet("/User", () =>
                 PasswordSalt = reader.GetString(3),
                 PasswordHash = reader.GetString(4),
                 GroupID = reader.GetInt32(5),
-                Active = reader.GetBoolean(6)
-                //SubscriptionDate = reader.GetDateTime(7)
+                Active = reader.GetBoolean(6),
+                SubscriptionDate = reader.GetDateTime(7)
             };
             users.Add(user);
         }
@@ -84,17 +84,17 @@ app.MapPost("/User", (User user) =>
         conn.Open();
 
         var command = new SqlCommand(
-            "INSERT INTO Users (userName, email, passwordSalt, passwordHash, groupID, active) VALUES (@userName, @email, @passwordSalt, @passwordHash, @groupID, @active)",
+            "INSERT INTO Users (userName, email, passwordSalt, passwordHash, groupID, active, subscriptionDate) VALUES (@userName, @email, @passwordSalt, @passwordHash, @groupID, @active, @subscriptionDate)",
             conn);
 
         command.Parameters.Clear();
         command.Parameters.AddWithValue("@userName", user.UserName);
         command.Parameters.AddWithValue("@email", user.Email);
-        command.Parameters.AddWithValue("@passwordSalt", saltString);
-        command.Parameters.AddWithValue("@passwordHash", hashed);
+        command.Parameters.AddWithValue("@passwordSalt", user.PasswordSalt);
+        command.Parameters.AddWithValue("@passwordHash", user.PasswordHash);
         command.Parameters.AddWithValue("@groupID", user.GroupID);
         command.Parameters.AddWithValue("@active", user.Active);
-        //command.Parameters.AddWithValue("@subscriptionDate", user.SubscriptionDate);
+        command.Parameters.AddWithValue("@subscriptionDate", user.SubscriptionDate);
 
         var newId = Convert.ToInt32(command.ExecuteScalar());
 
@@ -103,11 +103,91 @@ app.MapPost("/User", (User user) =>
     .WithName("CreateUser")
     .WithOpenApi();
 
+app.MapPut("/User/{id}", (int id, User user) =>
+    {
+        using var conn = new SqlConnection(connectionString);
+        conn.Open();
+
+        var command = new SqlCommand(
+            "UPDATE Users SET userName = @userName, email = @email, passwordSalt = @passwordSalt, passwordHash = @passwordHash, groupID = @groupID, active = @active, subscriptionDate = @subscriptionDate WHERE userID = @userID",
+            conn);
+
+        command.Parameters.Clear();
+        command.Parameters.AddWithValue("@userID", id);
+        command.Parameters.AddWithValue("@userName", user.UserName);
+        command.Parameters.AddWithValue("@email", user.Email);
+        command.Parameters.AddWithValue("@passwordSalt", user.PasswordSalt);
+        command.Parameters.AddWithValue("@passwordHash", user.PasswordHash);
+        command.Parameters.AddWithValue("@groupID", user.GroupID);
+        command.Parameters.AddWithValue("@active", user.Active);
+        command.Parameters.AddWithValue("@subscriptionDate", user.SubscriptionDate);
+
+        int rowsAffected = command.ExecuteNonQuery();
+        
+        return rowsAffected > 0 ? Results.Ok() : Results.NotFound();
+    })
+    .WithName("UpdateUser")
+    .WithOpenApi();
+
+//USERGROUPS
+app.MapGet("/UserGroups", () =>
+{
+    var userGroups = new List<UserGroup>();
+
+    using var conn = new SqlConnection(connectionString);
+    conn.Open();
+
+    var selectCmd = new SqlCommand(@"
+                SELECT * FROM UserGroups
+            ", conn);
+
+    using SqlDataReader reader = selectCmd.ExecuteReader();
+    if (reader.HasRows)
+    {
+        while (reader.Read())
+        {
+            var UserGroup = new UserGroup
+            {
+                GroupID = reader.GetInt32(0),
+                GroupName = reader.GetString(1)
+
+            };
+            userGroups.Add(UserGroup);
+        }
+    }
+
+    return userGroups;
+})
+.WithName("GetUserGroups")
+.WithOpenApi();
+
+app.MapPost("/UserGroups", (UserGroup userGroup) =>
+{
+
+    using var conn = new SqlConnection(connectionString);
+    conn.Open();
+
+    var command = new SqlCommand(
+        "INSERT INTO UserGroups (groupID, groupName) VALUES (@groupID, @groupName)",
+        conn);
+
+    command.Parameters.Clear();
+    command.Parameters.AddWithValue("@groupID", userGroup.GroupID);
+    command.Parameters.AddWithValue("@groupName", userGroup.GroupName);
+
+
+    var newId = Convert.ToInt32(command.ExecuteScalar());
+
+    return newId;
+})
+    .WithName("CreateUserGroup")
+    .WithOpenApi();
+
 //CATEGORIES
 
 
 //TRANSACTIONS
-    app.MapGet("/UserTransaction", () =>
+app.MapGet("/UserTransaction", () =>
     {
         var transactions = new List<UserTransaction>();
 
